@@ -56,9 +56,7 @@ class RedisSpiderSmartIdleClosedExensions(object):
         spider.logger.info("closed spider {}, Waiting time exceeded {} second".format(spider.name, self.idle_number*5))
 
     def spider_idle(self, spider):
-        # 程序启动的时候会调用这个方法一次，之后每隔5秒再请求一次
-        # 当持续半个小时都没有spider.redis_key，就关闭爬虫
-        # 判断是否存在 redis_key
+        """程序启动的时候会调用这个方法一次，之后每隔5秒再请求一次,判断是否存在 redis_key, 如果不存在则自动添加url到队列里面"""
         if not spider.server.exists(spider.redis_key):
             self.idle_count += 1
             spider.logger.info("No redis_key at 5 second")
@@ -66,7 +64,7 @@ class RedisSpiderSmartIdleClosedExensions(object):
             self.idle_count = 0
 
         if self.idle_count > self.idle_number:
-            # 执行关闭爬虫操作
+            # 自动添加start_urls里面的url到队列里
             spider.logger.info("There is empty in redis_key,push it")
             for url in spider.start_urls:
                 self.r.lpush(spider.redis_key, url)
